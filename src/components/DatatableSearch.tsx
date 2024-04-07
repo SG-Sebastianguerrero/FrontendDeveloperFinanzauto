@@ -24,7 +24,6 @@ const DatatableSearch: React.FC<IProps> = ({ data, setData }) => {
   }, []);
 
   useEffect(() => {
-    console.log(search);
     if (search.trim() === "" || search.length === 0) {
       setData(dataOriginal);
       setIsUserNotFound(false);

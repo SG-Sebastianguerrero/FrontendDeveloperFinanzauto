@@ -1,23 +1,107 @@
-import { Loader } from "./Loader";
-import { ErrorMessage, Field, Form, Formik } from "formik";
+import { ErrorMessage, Field, Form, Formik, FormikValues } from "formik";
 import { Dispatch, SetStateAction } from "react";
 import { FaWindowClose } from "react-icons/fa";
 import * as Yup from "yup";
+import { POST_USER, UPDATE_USER } from "../api";
 
-interface IProps {
-  setisOpenedModalUser: Dispatch<SetStateAction<boolean>>;
+export interface IModalUser {
+  modalUser: {
+    isopen: boolean;
+    method: string;
+    btnSubmitText: string;
+    id: string;
+  };
+  setModalUser: Dispatch<
+    SetStateAction<{
+      isopen: boolean;
+      method: string;
+      btnSubmitText: string;
+      id: string;
+    }>
+  >;
+  initialValues?: FormikValues & {
+    lastName: string;
+    picture: string;
+    email: string;
+    bith_date: string;
+    phone: string;
+    title: string;
+    gender: string;
+  };
 }
 
-const ModalUser: React.FC<IProps> = ({ setisOpenedModalUser }) => {
-  const handleSubmit = () => {};
-  const initialValues = {};
+const ModalUser: React.FC<IModalUser> = ({
+  setModalUser,
+  modalUser,
+  initialValues = {
+    lastName: "",
+    picture: "",
+    email: "",
+    bith_date: "",
+    phone: "",
+    title: "mr",
+    gender: "female",
+  },
+}) => {
+  const handleSubmit = (values: FormikValues, props: FormikValues) => {
+    let { setErrors } = props;
+    switch (modalUser.method) {
+      case "POST":
+        POST_USER(values)
+          .then(({ data }) => {
+            setModalUser({ ...modalUser, isopen: false });
+            alert(`creado Satisfactoriamente con el ID ${data.id}`);
+          })
+          .catch((error) => {
+            let { response } = error;
+            let errorProp = response?.data?.data?.email || "Ocurrió un error";
+            if (error instanceof Error) {
+              setErrors({ fromserver: errorProp });
+            }
+          });
+        break;
+
+      case "PUT":
+        UPDATE_USER(values.id, values)
+          .then(({ data }) => {
+            console.log(data);
+            setModalUser({ ...modalUser, isopen: false });
+            alert(`Actualizado Satisfactoriamente`);
+          })
+          .catch((error) => {
+            let { response } = error;
+            let errorProp = response?.data?.data?.email || "Ocurrió un error";
+            if (error instanceof Error) {
+              setErrors({ fromserver: errorProp });
+            }
+          });
+        break;
+      default:
+        UPDATE_USER(values.id, values)
+          .then(({ data }) => {
+            console.log(data);
+            setModalUser({ ...modalUser, isopen: false });
+            alert(`Actualizado Satisfactoriamente`);
+          })
+          .catch((error) => {
+            let { response } = error;
+            let errorProp = response?.data?.data?.email || "Ocurrió un error";
+            if (error instanceof Error) {
+              setErrors({ fromserver: errorProp });
+            }
+          });
+        break;
+    }
+
+    // console.log(props);
+  };
+
   const validationSchema = Yup.object().shape({
-    name: Yup.string().required("Nombre Obligatorio"),
-    lastname: Yup.string().required("Nombre Obligatorio"),
-    picture: Yup.string().required("Nombre Obligatorio"),
-    email: Yup.string().required("Nombre Obligatorio"),
-    bith_date: Yup.string().required("Nombre Obligatorio"),
-    phone: Yup.string().required("Nombre Obligatorio"),
+    firstName: Yup.string().required("Nombre Obligatorio"),
+    lastName: Yup.string().required("Apellido Obligatorio"),
+    picture: Yup.string().required("Link Imagen Obligatorio"),
+    email: Yup.string().required("Correo Obligatorio"),
+    phone: Yup.string().required("Telefono Obligatorio"),
   });
 
   return (
@@ -36,7 +120,7 @@ const ModalUser: React.FC<IProps> = ({ setisOpenedModalUser }) => {
                 <div
                   className="w-full flex justify-end items-center hover:cursor-pointer"
                   onClick={() => {
-                    setisOpenedModalUser(false);
+                    setModalUser({ ...modalUser, isopen: false });
                   }}
                 >
                   <FaWindowClose className="text-brand_green  text-3xl" />
@@ -46,36 +130,54 @@ const ModalUser: React.FC<IProps> = ({ setisOpenedModalUser }) => {
                     {errors.fromserver}
                   </span>
                 )}
-                <Field name="title" as="select">
-                  <option value="mr">mr</option>
-                  <option value="ms">ms</option>
-                  <option value="mrs">mrs</option>
-                  <option value="miss">miss</option>
-                  <option value="dr">dr</option>
+
+                {initialValues?.id && (
+                  <Field
+                    type={"text"}
+                    name="id"
+                    placeholder="Id"
+                    className="bg-zing-800 px-4 py-2 block mb-2 rounded-md border border-gray-200"
+                    disabled
+                  />
+                )}
+
+                <Field
+                  name="title"
+                  as="select"
+                  className="px-2 py-2 border border-gray-200 rounded-full"
+                  disabled={modalUser.method === "GET" ? true : false}
+                >
+                  <option value="mr">Señor</option>
+                  <option value="ms">Sra</option>
+                  <option value="mrs">Señora</option>
+                  <option value="miss">Señorita</option>
+                  <option value="dr">Doctor</option>
                 </Field>
 
                 <ErrorMessage
-                  name="name"
+                  name="firstName"
                   className="text-red-500"
                   component="span"
                 />
                 <Field
                   type={"text"}
-                  name="name"
+                  name="firstName"
                   placeholder="Nombres"
                   className="bg-zing-800 px-4 py-2 block mb-2 rounded-md border border-gray-200"
+                  disabled={modalUser.method === "GET" ? true : false}
                 />
 
                 <ErrorMessage
-                  name="lastname"
+                  name="lastName"
                   className="text-red-500"
                   component="span"
                 />
                 <Field
                   type={"text"}
-                  name="lastname"
+                  name="lastName"
                   placeholder="Apellidos"
                   className="bg-zing-800 px-4 py-2 block mb-2 rounded-md border border-gray-200"
+                  disabled={modalUser.method === "GET" ? true : false}
                 />
 
                 <ErrorMessage
@@ -88,9 +190,15 @@ const ModalUser: React.FC<IProps> = ({ setisOpenedModalUser }) => {
                   name="picture"
                   placeholder="URL imagen (Buscar en internet)"
                   className="bg-zing-800 px-4 py-2 block mb-2 rounded-md border border-gray-200"
+                  disabled={modalUser.method === "GET" ? true : false}
                 />
 
-                <Field name="gender" as="select">
+                <Field
+                  name="gender"
+                  as="select"
+                  className="px-2 py-2 border border-gray-200 rounded-full"
+                  disabled={modalUser.method === "GET" ? true : false}
+                >
                   <option value="male">Masculino</option>
                   <option value="female">Femenino</option>
                   <option value="other">Otro</option>
@@ -106,18 +214,7 @@ const ModalUser: React.FC<IProps> = ({ setisOpenedModalUser }) => {
                   name="email"
                   placeholder="Correo"
                   className="bg-zing-800 px-4 py-2 block mb-2 rounded-md border border-gray-200"
-                />
-
-                <ErrorMessage
-                  name="bith_date"
-                  className="text-red-500"
-                  component="span"
-                />
-                <Field
-                  type={"date"}
-                  name="bith_date"
-                  placeholder="Fecha de nacimiento"
-                  className="bg-zing-800 px-4 py-2 block mb-2 rounded-md border border-gray-200"
+                  disabled={modalUser.method === "GET" ? true : false}
                 />
 
                 <ErrorMessage
@@ -130,16 +227,16 @@ const ModalUser: React.FC<IProps> = ({ setisOpenedModalUser }) => {
                   name="phone"
                   placeholder="Telefono"
                   className="bg-zing-800 px-4 py-2 block mb-2 rounded-md border border-gray-200"
+                  disabled={modalUser.method === "GET" ? true : false}
                 />
 
                 <button
                   type="submit"
                   className="bg-brand_green text-white px-4 py-2 disabled:opacity-75 rounded-md"
-                  disabled={props.isSubmitting}
+                  disabled={modalUser.method === "GET" ? true : false}
                 >
-                  Crear Usuario
+                  {modalUser.btnSubmitText}
                 </button>
-                {props.isSubmitting && <Loader />}
               </Form>
             );
           }}
